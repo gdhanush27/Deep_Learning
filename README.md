@@ -29,5 +29,5 @@
 
 ## Mini project
 
-[Pneumonia detection using CNN with x-ray images](https://github.com/gdhanush27/Deep_Learning/tree/main/mini%20project)
+[Pneumonia detection using CNN with x-ray images](https://github.com/gdhanush27/Deep_Learning/blob/main/mini%20project/final.ipynb)
 
