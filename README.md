@@ -3,7 +3,7 @@
 
 [Multi-Layer neural network for Mnist dataset](https://github.com/gdhanush27/Deep_Learning/blob/main/exp01/ex01.ipynb)
 
-## Exp01
+## Exp01(B)
 
 [Multi-Layer neural network for Pizz-vs-icecream dataset](https://github.com/gdhanush27/Deep_Learning/blob/main/ex1b/dl_1b_dhanushg.ipynb)
 
