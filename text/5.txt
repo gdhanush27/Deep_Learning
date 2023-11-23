@@ -99,3 +99,20 @@ df.groupBy("department").mean("salary").show()
 df.groupBy("department", "state").sum("salary", "bonus").show()
 df.groupBy("department").agg(sum("salary").alias("sum_salary"),avg("salary").alias("avg_salary"),sum("bonus").alias("sum_bonus"),avg("bonus").alias("avg_bonus")).show()
 df.agg({'salary':'max','bonus':'max','age':'max'}).show()
+
+#word count
+from pyspark.sql import SparkSession
+spark = SparkSession.builder\
+                    .master("local")\
+                    .appName('Firstprogram')\
+                    .getOrCreate()
+sc=spark.sparkContext
+text_file = sc.textFile("kln_sample.txt")
+counts = text_file.flatMap(lambda line: line.split(" ")) \
+                            .map(lambda word: (word, 1)) \
+                           .reduceByKey(lambda x, y: x + y)
+output = counts.collect()
+for (word, count) in output:
+    print("%s: %i" % (word, count))
+sc.stop()
+spark.stop()
