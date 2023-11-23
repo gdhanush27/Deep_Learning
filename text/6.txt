@@ -1,43 +1,45 @@
-import tensorflow as tf
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-#Load Data
-data = tf.keras.utils.image_dataset_from_directory('/content/data')
-data_iterator = data.as_numpy_iterator()
-batch = data_iterator.next()
-fig, ax = plt.subplots(ncols=4, figsize=(20,20))
-for idx, img in enumerate(batch[0][:4]):
-    ax[idx].imshow(img.astype(int))
-    ax[idx].title.set_text(batch[1][idx])
-#Scale Data
-data = data.map(lambda x,y: (x/255, y))
-data.as_numpy_iterator().next()
-#Split Data
-train_size = int(len(data)*.7)
-val_size = int(len(data)*.2)
-test_size = int(len(data)*.1)
-train_size
-train = data.take(train_size)
-val = data.skip(train_size).take(val_size)
-test = data.skip(train_size+val_size).take(test_size)
-# Build Deep Learning Model
-train
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-model = Sequential()
-model.add(Conv2D(16, (3,3), 1, activation='relu', input_shape=(256,256,3)))
-model.add(MaxPooling2D())
-model.add(Conv2D(32, (3,3), 1, activation='relu'))
-model.add(MaxPooling2D())
-model.add(Conv2D(16, (3,3), 1, activation='relu'))
-model.add(MaxPooling2D())
-model.add(Flatten())
-model.add(Dense(256, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
-model.compile('adam', loss=tf.losses.BinaryCrossentropy(), metrics=['accuracy'])
-model.summary()
-#Train
-logdir='logs'
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
-hist = model.fit(train, epochs=20, validation_data=val, callbacks=[tensorboard_callback])
+from pyspark.sql import SparkSession
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
+
+# Create a Spark session
+spark = SparkSession.builder.appName("LinearRegressionPipelineExample").getOrCreate()
+
+# Sample DataFrame
+data = [(1.0, 2.0, 3.0),
+        (2.0, 3.0, 4.0),
+        (3.0, 4.0, 5.0),
+        (4.0, 5.0, 6.0)]
+
+columns = ["label", "feature1", "feature2"]
+
+df = spark.createDataFrame(data, columns)
+
+# Define the feature assembler
+feature_columns = ["feature1", "feature2"]
+assembler = VectorAssembler(inputCols=feature_columns, outputCol="features")
+
+# Define the linear regression model
+lr = LinearRegression(featuresCol="features", labelCol="label")
+
+# Create a pipeline with the feature assembler and linear regression model
+pipeline = Pipeline(stages=[assembler, lr])
+
+# Split the data into training and testing sets
+train_data, test_data = df.randomSplit([0.8, 0.2], seed=123)
+
+# Fit the pipeline to the training data
+pipeline_model = pipeline.fit(train_data)
+
+# Make predictions on the test data
+predictions = pipeline_model.transform(test_data)
+
+# Show the predictions
+predictions.select("prediction", "label", "features").show()
+
+# Evaluate the model
+evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
+rmse = evaluator.evaluate(predictions)
+print("Root Mean Squared Error (RMSE) on test data = {}".format(rmse))

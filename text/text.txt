@@ -2,5 +2,5 @@ DecisionTreeClassifier: https://github.com/gdhanush27/Deep_Learning/raw/main/tex
 RandomForestClassifier: https://github.com/gdhanush27/Deep_Learning/raw/main/text/1b.txt
 WINDOWING FUNCTION : https://github.com/gdhanush27/Deep_Learning/raw/main/text/2.txt
 Actions ,Transformation and WC : https://github.com/gdhanush27/Deep_Learning/raw/main/text/5.txt
-https://github.com/gdhanush27/Deep_Learning/raw/main/text/6.txt
+lr : https://github.com/gdhanush27/Deep_Learning/raw/main/text/6.txt
 https://github.com/gdhanush27/Deep_Learning/raw/main/text/7.txt
