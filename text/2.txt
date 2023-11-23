@@ -1,31 +1,44 @@
-from sklearn.datasets import make_classification
-import pandas as pd
-import numpy as np
-from collections import Counter
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-import tensorflow as tf
-from tensorflow.keras import layers, losses
-from sklearn.metrics import classification_report 
-X, y = make_classification(n_samples=100000, n_features=32,n_informative=32,n_redundant=0, n_repeated=0, n_classes=2,n_clusters_per_class=1,weights=[0.995, 0.005],class_sep=0.5, random_state=0)
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import count
+spark=SparkSession.builder.master("local[1]").appName("Videogame_window").getOrCreate()
+df=spark.read.csv("/content/vgsales.csv",header=True,inferSchema=True)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.2, random_state=42)
-X_train_normal = X_train[np.where(y_train == 0)]
-input = tf.keras.layers.Input(shape=(32,))# Encoder layers
-encoder = tf.keras.Sequential([layers.Dense(16, activation="relu"),layers.Dense(8, activation='relu'),layers.Dense(4, activation='relu')])(input)
-decoder = tf.keras.Sequential([layers.Dense(8, activation='relu'),layers.Dense(16, activation='relu'),layers.Dense(32, activation='sigmoid')])(encoder)
-autoencoder = tf.keras.Model(inputs=input, outputs=decoder)
-autoencoder.compile(optimizer='adam', loss='mae')
-history = autoencoder.fit(X_train_normal, X_train_normal,epochs=20,batch_size=64,validation_data=(X_test, X_test),shuffle=True)
-plt.plot(history.history['loss'], label='Training  Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.legend()
-prediction = autoencoder.predict(X_test)
-prediction_loss = tf.keras.losses.mae(prediction, X_test)
-loss_threshold = np.percentile(prediction_loss, 98)
-print(f'The prediction loss threshold for 2% of outliers is {loss_threshold:.2f}')
-sns.histplot(prediction_loss, bins=30, alpha=0.8)
-threshold_prediction = [0 if i < loss_threshold else 1 for i in prediction_loss]
-print(classification_report(y_test, threshold_prediction))
+column_name="Publisher"
+df.groupBy(column_name).agg(count("*").alias("Count")).show()
+
+from pyspark.sql.window import Window
+from pyspark.sql.functions import row_number
+windowspec=Window.partitionBy("Publisher").orderBy("Global_Sales")
+df.withColumn("row_number",row_number().over(windowspec)).show(truncate=False)
+
+from pyspark.sql.functions import rank
+df.withColumn("rank",rank().over(windowspec)).show(5)
+
+from pyspark.sql.functions import dense_rank
+df.withColumn("dense_rank",dense_rank().over(windowspec)).show(5)
+
+from pyspark.sql.functions import percent_rank
+df.withColumn("percent_rank",percent_rank().over(windowspec)).show(5)
+
+from pyspark.sql.functions import ntile
+df.withColumn("ntile",ntile(2).over(windowspec)).show(5)
+
+from pyspark.sql.functions import cume_dist
+df.withColumn("cume_dist",cume_dist().over(windowspec)).show(5)
+
+from pyspark.sql.functions import lag
+df.withColumn("lag",lag("Global_Sales").over(windowspec)).show(5)
+
+from pyspark.sql.functions import lead
+df.withColumn("lead",lead("Global_Sales",2).over(windowspec)).show(5)
+
+from pyspark.sql.window import Window
+from pyspark.sql.functions import col,avg,sum,min,max,row_number
+windowspecagg = Window.partitionBy("Publisher")
+windowspec=Window.partitionBy("Publisher").orderBy("Global_Sales")
+df.withColumn("row",row_number().over(windowspec))\
+  .withColumn("avg",avg(col("Global_Sales")).over(windowspecagg))\
+  .withColumn("sum",sum(col("Global_Sales")).over(windowspecagg))\
+  .withColumn("min",min(col("Global_Sales")).over(windowspecagg))\
+  .withColumn("max",max(col("Global_Sales")).over(windowspecagg))\
+  .where(col("row")==1).select("Publisher","avg","sum","min","max").show()
