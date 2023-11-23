@@ -1,70 +1,101 @@
-import random
-import numpy as np
-import tensorflow as tf
+import pyspark
+from pyspark.sql import SparkSession
+spark = SparkSession.builder\
+                    .master("local")\
+                    .appName('Firstprogram')\
+                    .getOrCreate()
+sc=spark.sparkContext
+data=[
+   ["21ADR001", "aarthi", "KEC", "AI",67, 89],
+   ["21ADR002", "cibi", "PSG","AI", 78, 89],
+   ["21ADR004", "chandru", "KEC", "AI", 78, 89],
+   ["21CSR51", "raj", "KEC", "CSE",100, 80],
+   ["21CSR55", "rohith", "KEC", "CSE", 100, 80],
+   ["21CSR76", "vetri", "PSG", "CSE", 57, 80],
+   ["21CSR51", "zubair", "KEC", "CSE",85, 80],
+   ["21ADR072", "saran", "PSG","AI", 78, 89],
+   ["21ADR073", "siva", "PSG","AI", 78, 58],
+   ["21ITR004", "arun", "PSG", "IT", 58, 78],
+   ["21ITR005", "cibi", "PSG", "IT",68, 56],
+   ["21ITR002", "adhi", "PSG", "IT", 78, 90],
+   ["21MTR002", "adhi", "PSG", "MTS", 78, 90],
 
-filepath = tf.keras.utils.get_file('shakespeare.txt','https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt')
-text = open(filepath, 'rb').read().decode(encoding='utf-8')
-text = open(filepath, 'rb').read().decode(encoding='utf-8').lower()
-text = text[300000:800000]
-characters = sorted(set(text))
+]
+columns=['studentID', 'studentname',
+'collegename', 'dept','subiect 1', 'subiect 2']
+df=spark.createDataFrame(data,columns)
 
-char_to_index = dict((c, i) for i, c in enumerate(characters))
-index_to_char = dict((i, c) for i, c in enumerate(characters))
+rdd=sc.parallelize(data)
+print(rdd.count())
+print(rdd.collect())
+print(rdd.first())
+print(rdd.take(5))
+print(rdd.reduce(lambda x, y : x + y))
+reduce_rdd = sc.parallelize([1,3,4,6])
+print(reduce_rdd.reduce(lambda x, y : x + y))
 
-sentences = []
-next_char = []
+df.printSchema()
+df.show(n=3,truncate=25)
+df.select("*").show()
+df.select(df.columns[1:4]).show(2)
+print(df.collect())
 
-SEQ_LENGTH = 40
-STEP_SIZE = 3
+#transfermations
+my_rdd = sc.parallelize([1,2,3,4])
+print(my_rdd.map(lambda x: x+ 10).collect())
 
-for i in range(0, len(text) - SEQ_LENGTH, STEP_SIZE):
-    sentences.append(text[i: i + SEQ_LENGTH])
-    next_char.
-x = np.zeros((len(sentences), SEQ_LENGTH,len(characters)), dtype=np.bool)
-y = np.zeros((len(sentences),len(characters)), dtype=np.bool)
-for i, satz in enumerate(sentences):
-    for t, char in enumerate(satz):
-        x[i, t, char_to_index[char]] = 1
-    y[i, char_to_index[next_char[i]]] = 1
+print(rdd.filter(lambda x: x%2 == 0).collect())
+print(rdd.filter(lambda x: x.startswith('R')).collect())
 
-import random
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import RMSprop
-from tensorflow.keras.layers import Activation, Dense, LSTM
-model = Sequential()
-model.add(LSTM(128, input_shape=(SEQ_LENGTH, len(characters))))
-model.add(Dense(len(characters)))
-model.add(Activation('softmax'))
-model.compile(loss='categorical_crossentropy',optimizer=RMSprop(lr=0.01))
-model.fit(x, y, batch_size=256, epochs=4)
+union_inp = sc.parallelize([2,4,5,6,7,8,9])
+union_rdd_1 = union_inp.filter(lambda x: x % 2 == 0)
+union_rdd_2 = union_inp.filter(lambda x: x % 3 == 0)
+print(union_rdd_1.union(union_rdd_2).collect())
+print(union_rdd_1.intersection(union_rdd_2).collect())
 
-def sample(preds, temperature=1.0):
-    preds = np.asarray(preds).astype('float64')
-    preds = np.log(preds) / temperature
-    exp_preds = np.exp(preds)
-    preds = exp_preds / np.sum(exp_preds)
-    probas = np.random.multinomial(1, preds, 1)
-    return np.argmax(probas)
+inp = sc.parallelize([1,2,4,5,6,7,8,9,10])
+rdd_1 = inp.filter(lambda x: x % 2 == 0)
+rdd_2 = inp.filter(lambda x: x % 3 == 0)
+print(rdd_1.subtract(rdd_2).collect())
 
-def generate_text(length, temperature):
-    start_index = random.randint(0, len(text) - SEQ_LENGTH - 1)
-    generated = ''
-    sentence = text[start_index: start_index + SEQ_LENGTH]
-    generated += sentence
-    for i in range(length):
-        x_predictions = np.zeros((1, SEQ_LENGTH, len(characters)))
-        for t, char in enumerate(sentence):
-            x_predictions[0, t, char_to_index[char]] = 1
+flatmap_rdd = sc.parallelize(["Hey there", "This is PySpark RDD Transformations"])
+(flatmap_rdd.flatMap(lambda x: x.split(" ")).collect())
 
-        predictions = model.predict(x_predictions, verbose=0)[0]
-        next_index = sample(predictions,
-                                 temperature)
-        next_character = index_to_char[next_index]
+marks_rdd = sc.parallelize([('Rahul', 25), ('Swati', 26), ('Shreya', 22), ('Abhay', 29), ('Rohan', 22), ('Rahul', 23), ('Swati', 19), ('Shreya', 28), ('Abhay', 26), ('Rohan', 22)])
+print(marks_rdd.reduceByKey(lambda x, y: x + y).collect())
 
-        generated += next_character
-        sentence = sentence[1:] + next_character
-    return generated
+marks_rdd = sc.parallelize([('Rahul', 25), ('Swati', 26), ('Shreya', 22), ('Abhay', 29), ('Rohan', 22), ('Rahul', 23), ('Swati', 19), ('Shreya', 28), ('Abhay', 26), ('Rohan', 22)])
+print(marks_rdd.sortByKey(ascending=True).collect())
 
-print(generate_text(300, 0.2))
+marks_rdd = sc.parallelize([('Rahul', 25), ('Swati', 26), ('Shreya', 22), ('Abhay', 29), ('Rohan', 22), ('Rahul', 23), ('Swati', 19), ('Shreya', 28), ('Abhay', 26), ('Rohan', 22)])
+dict_rdd = marks_rdd.groupByKey().collect()
+for key, value in dict_rdd:
+    print(key, list(value))
+
+marks_rdd = sc.parallelize([('Rahul', 25), ('Swati', 26), ('Rohan', 22), ('Rahul', 23), ('Swati', 19), ('Shreya', 28), ('Abhay', 26), ('Rohan', 22)])
+dict_rdd = marks_rdd.countByKey().items()
+for key, value in dict_rdd:
+    print(key, value)
+
+df.filter(df.dept=="AI").show(truncate=False)
+df.filter(~(df.dept == "AI")).show(truncate=False)
+df.filter("dept!= 'CSE'").show()
+df.filter("DEPT <> 'CSE'").show()
+df.filter( (df.collegename == "KEC") & (df.dept == "AI") ).show
+li=["CSE","IT","AI"]
+df.filter(df.dept.isin(li)).show()
+df.filter(df.dept.startswith("C")).show()
+df.filter(df.dept.endswith("I")).show()
+df.filter(df.collegename.contains("E")).show()
+df.filter(df.studentID.like("%CSR%")).show()
+df.sort("dept").show(truncate=False)
+df.sort("collegename","dept").show(truncate=False)
+df.orderBy("collegename","dept").show(truncate=False)
+df.sort(df.collegename.asc(),df.dept.asc()).show(truncate=False)
+df.sort(df.collegename.asc(),df.dept.desc()).show(truncate=False)
+df.groupBy("department").sum("salary").show(truncate=False)
+df.groupBy("department").count().show()
+df.groupBy("department").mean("salary").show()
+df.groupBy("department", "state").sum("salary", "bonus").show()
+df.groupBy("department").agg(sum("salary").alias("sum_salary"),avg("salary").alias("avg_salary"),sum("bonus").alias("sum_bonus"),avg("bonus").alias("avg_bonus")).show()
+df.agg({'salary':'max','bonus':'max','age':'max'}).show()
