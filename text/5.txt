@@ -100,6 +100,7 @@ df.groupBy("department", "state").sum("salary", "bonus").show()
 df.groupBy("department").agg(sum("salary").alias("sum_salary"),avg("salary").alias("avg_salary"),sum("bonus").alias("sum_bonus"),avg("bonus").alias("avg_bonus")).show()
 df.agg({'salary':'max','bonus':'max','age':'max'}).show()
 
+
 #word count
 from pyspark.sql import SparkSession
 spark = SparkSession.builder\
