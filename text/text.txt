@@ -1,5 +1,5 @@
 DecisionTreeClassifier: https://github.com/gdhanush27/Deep_Learning/raw/main/text/1.txt
-https://github.com/gdhanush27/Deep_Learning/raw/main/text/1b.txt
+RandomForestClassifier: https://github.com/gdhanush27/Deep_Learning/raw/main/text/1b.txt
 https://github.com/gdhanush27/Deep_Learning/raw/main/text/2.txt
 https://github.com/gdhanush27/Deep_Learning/raw/main/text/5.txt
 https://github.com/gdhanush27/Deep_Learning/raw/main/text/6.txt
