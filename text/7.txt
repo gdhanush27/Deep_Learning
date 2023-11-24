@@ -22,3 +22,34 @@ training = spark.createDataFrame([
 (11, "hadoop software", 0.0)
 ], ["id", "text", "label"])
 training.show()
+tokenizer = Tokenizer(inputCol="text", outputCol="words")
+print(tokenizer)
+tokenized=tokenizer.transform(training)
+hashingTF = HashingTF(inputCol=tokenizer.getOutputCol(), outputCol="features")
+hashed = hashingTF.transform(tokenizer.transform(training))
+hashed.select("id", "text", "features").show()
+hashed.show(truncate=False)
+lr = LogisticRegression(maxIter=10)
+pipeline = Pipeline(stages=[tokenizer, hashingTF, lr])
+paramGrid = ParamGridBuilder() \
+.addGrid(hashingTF.numFeatures, [10, 100, 1000]) \
+.addGrid(lr.regParam, [0.1, 0.01]) \
+.build()
+crossval = CrossValidator(estimator=pipeline,
+estimatorParamMaps=paramGrid,
+evaluator=BinaryClassificationEvaluator(),
+numFolds=2) 
+cvModel = crossval.fit(training)
+# Prepare test documents, which are unlabeled.
+test = spark.createDataFrame([
+(4, "spark i j k"),
+(5, "l m n"),
+(6, "mapreduce spark"),
+(7, "apache hadoop")
+], ["id", "text"])
+prediction = cvModel.transform(test)
+selected = prediction.select("id", "text", "probability", "prediction")
+for row in selected.collect():
+print(row)
+
+prediction.show(truncate=False)
