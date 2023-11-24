@@ -3,4 +3,4 @@ RandomForestClassifier: https://github.com/gdhanush27/Deep_Learning/raw/main/tex
 WINDOWING FUNCTION : https://github.com/gdhanush27/Deep_Learning/raw/main/text/2.txt
 Actions ,Transformation and WC : https://github.com/gdhanush27/Deep_Learning/raw/main/text/5.txt
 lr : https://github.com/gdhanush27/Deep_Learning/raw/main/text/6.txt
-https://github.com/gdhanush27/Deep_Learning/raw/main/text/7.txt
+logistic : https://github.com/gdhanush27/Deep_Learning/raw/main/text/7.txt
